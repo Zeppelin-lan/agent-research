@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-research"
+version = "0.1.0"
+description = "A modular, observable single-agent research platform built on LangGraph"
+requires-python = ">=3.11"
+dependencies = [
+  "langgraph>=0.2,<2",
+  "pydantic>=2.7,<3",
+  "PyYAML>=6,<7",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.40,<3"]
+anthropic = ["anthropic>=0.34,<1"]
+gemini = ["google-genai>=1,<2"]
+dev = ["pytest>=8,<9"]
+all = [
+  "openai>=1.40,<3",
+  "anthropic>=0.34,<1",
+  "google-genai>=1,<2",
+  "pytest>=8,<9",
+]
+
+[project.scripts]
+agent-run = "agent_research.cli:main"
+agent-experiment = "agent_research.experiments.runner:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent_research"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# LangGraph installs LangSmith's optional pytest plugin transitively. The project
+# uses its own JSON tracer, so disable that network-oriented plugin in local tests.
+addopts = "-q -p no:langsmith.pytest_plugin --basetemp=.pytest-tmp"

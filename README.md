@@ -62,7 +62,7 @@ START -> load_memory -> call_model
                  +-------------> call_model
 ```
 
-`load_memory` retrieves relevant records once and builds system context. `call_model` passes the full message history and every registered tool schema to the adapter. The model鈥攏ot application code鈥攕elects tools. `execute_tools` validates arguments, executes each requested tool, and appends results as tool messages. The cycle continues until a final model response, an error, or `max_steps`.
+`load_memory` retrieves relevant records once and builds system context. `call_model` passes the full message history and every registered tool schema to the adapter. The model—not application code—selects tools. `execute_tools` validates arguments, executes each requested tool, and appends results as tool messages. The cycle continues until a final model response, an error, or `max_steps`.
 
 ## Setup
 
@@ -127,7 +127,7 @@ The registry derives JSON Schema from Pydantic and validates every call before e
 
 ## Memory
 
-`MemoryStore` defines `add_memory`, `retrieve_memories`, `delete_memory`, and `clear`. `SQLiteMemory` persists text and metadata in a local database, then ranks records using a deterministic bag-of-words cosine vector. This is a reproducible, zero-service baseline鈥攏ot a semantic embedding model. To use learned embeddings or another local vector store, implement `MemoryStore` and inject it into `AgentRuntime`; no graph change is needed.
+`MemoryStore` defines `add_memory`, `retrieve_memories`, `delete_memory`, and `clear`. `SQLiteMemory` persists text and metadata in a local database, then ranks records using a deterministic bag-of-words cosine vector. This is a reproducible, zero-service baseline—not a semantic embedding model. To use learned embeddings or another local vector store, implement `MemoryStore` and inject it into `AgentRuntime`; no graph change is needed.
 
 Zero-similarity records are excluded from retrieval, even when `top_k` has remaining capacity. This keeps unrelated persistent records out of model context.
 

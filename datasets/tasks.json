@@ -1,0 +1,7 @@
+[
+  {
+    "id": "example-1",
+    "task": "Briefly explain the distinction between an LLM and an agent.",
+    "expected_contains": "answer"
+  }
+]

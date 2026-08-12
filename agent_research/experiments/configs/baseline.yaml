@@ -1,0 +1,12 @@
+models:
+  - provider: mock
+    model: mock-model
+memory:
+  enabled: true
+  top_k: 5
+  path: ../../../memory.sqlite3
+max_steps: 8
+tasks_file: ../../../datasets/tasks.json
+trace_dir: ../../../traces
+results_file: ../../../results/baseline.csv
+seed: 42
