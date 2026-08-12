@@ -12,8 +12,18 @@ from pydantic import BaseModel, Field, model_validator
 class ModelConfig(BaseModel):
     provider: Literal["openai", "anthropic", "gemini", "mock"] = "mock"
     model: str = "mock-model"
-    temperature: float = 0.0
-    max_tokens: int = Field(default=1024, gt=0)
+    temperature: float | None = None
+    max_output_tokens: int = Field(default=1024, gt=0)
+
+    @model_validator(mode="before")
+    @classmethod
+    def migrate_legacy_token_name(cls, value: Any) -> Any:
+        """Accept old experiment YAML while emitting only the current name."""
+        if isinstance(value, dict) and "max_tokens" in value:
+            data = dict(value)
+            data.setdefault("max_output_tokens", data.pop("max_tokens"))
+            return data
+        return value
 
 
 class MemoryConfig(BaseModel):
