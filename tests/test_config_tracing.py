@@ -1,6 +1,6 @@
 import json
 
-from agent_research.core.config import ExperimentConfig
+from agent_research.core.config import ExperimentConfig, ModelConfig
 from agent_research.core.tracing import JsonTracer
 
 
@@ -10,6 +10,19 @@ def test_experiment_config_loading_resolves_paths(tmp_path) -> None:
     config = ExperimentConfig.from_yaml(config_file)
     assert config.models[0].provider == "mock"
     assert config.tasks_file == (tmp_path / "tasks.json").resolve()
+
+
+def test_model_config_migrates_legacy_max_tokens_name() -> None:
+    config = ModelConfig.model_validate(
+        {
+            "provider": "openai",
+            "model": "gpt-5.6",
+            "max_tokens": 2048,
+        }
+    )
+
+    assert config.max_output_tokens == 2048
+    assert "max_tokens" not in config.model_dump()
 
 
 def test_trace_generation(tmp_path) -> None:
