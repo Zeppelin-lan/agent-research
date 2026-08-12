@@ -16,4 +16,6 @@ def create_model(config: ModelConfig) -> ModelAdapter:
     }
     if config.provider == "mock":
         return MockModelAdapter(model_name=config.model)
-    return adapters[config.provider](config.model, config.temperature, config.max_tokens)
+    return adapters[config.provider](
+        config.model, config.temperature, config.max_output_tokens
+    )
