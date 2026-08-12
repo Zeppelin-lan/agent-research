@@ -96,8 +96,13 @@ The CLI defaults to the free deterministic mock. A `.env` loader is intentionall
 ## Run one task
 
 ```powershell
-agent-run "What is 17 * 23?" --provider openai --model gpt-4.1-mini
+agent-run "What is 17 * 23?" --provider openai --model gpt-5.6
 ```
+
+The OpenAI adapter uses the current Responses API (`client.responses.create`),
+including flat function-tool definitions, `function_call_output` items, and the
+`max_output_tokens` request field. `temperature` is omitted unless configured
+explicitly, which keeps the default compatible with reasoning models.
 
 For a no-key smoke test:
 
@@ -211,7 +216,8 @@ Example configuration:
 ```yaml
 models:
   - provider: openai
-    model: gpt-4.1-mini
+    model: gpt-5.6
+    max_output_tokens: 1024
   - provider: anthropic
     model: claude-sonnet-4-20250514
 memory:

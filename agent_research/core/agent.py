@@ -74,7 +74,15 @@ class AgentRuntime:
                 response = self.model.generate(state["messages"], self.tools.schemas())
             usage = response.usage
             messages = list(state["messages"])
-            messages.append(Message(role="assistant", content=response.content, tool_calls=response.tool_calls))
+            provider_items = response.raw.get("output", []) if response.raw else []
+            messages.append(
+                Message(
+                    role="assistant",
+                    content=response.content,
+                    tool_calls=response.tool_calls,
+                    provider_items=provider_items,
+                )
+            )
             assert self._tracer
             self._tracer.record("model_response", step, timer.elapsed_ms, input_messages=[m.model_dump(mode="json") for m in state["messages"]], retrieved_memories=state["retrieved_memories"], available_tools=self.tools.schemas(), model_response=response.model_dump(mode="json"))
             answer = response.content if not response.tool_calls else None
@@ -114,26 +122,62 @@ class AgentRuntime:
                     stored_text=str(output["text"]),
                     memory_metadata=output["metadata"],
                 )
-        return {"tool_calls": [*state["tool_calls"], *state["pending_tool_calls"]], "tool_results": results, "messages": messages, "pending_tool_calls": [], "errors": errors}
+        return {"tool_calls": [*state["t…1154 tokens truncated…["system", "user", "assistant", "tool"]
+    content: str = ""
+    name: str | None = None
+    tool_call_id: str | None = None
+    tool_calls: list[ToolCall] = Field(default_factory=list)
+    provider_items: list[dict[str, Any]] = Field(default_factory=list)
 
-    def _route_tools(self, state: AgentState) -> Literal["model", "finalize"]:
-        return "model" if state["current_step"] < self.config.max_steps else "finalize"
 
-    def _finalize(self, state: AgentState) -> dict:
-        answer = state["final_answer"]
-        if answer is None:
-            answer = f"Stopped after reaching max_steps={self.config.max_steps}."
-        assert self._tracer
-        self._tracer.record("final", state["current_step"], final_answer=answer, error="; ".join(state["errors"]) or None)
-        return {"final_answer": answer}
+class ToolResult(BaseModel):
+    call_id: str
+    name: str
+    output: Any = None
+    error: str | None = None
 
-    def run(self, task: str, run_id: str | None = None) -> AgentState:
-        run_id = run_id or str(uuid.uuid4())
-        self._active_run_id = run_id
-        self._tracer = JsonTracer(self.config.trace_dir, run_id, task, self.model.provider, self.model.model_name)
-        try:
-            state = self.graph.invoke(initial_state(run_id, task))
-            self._tracer.finish(state["final_answer"], state["errors"], state["total_input_tokens"], state["total_output_tokens"])
-            return state
-        finally:
-            self._active_run_id = None
+
+class ModelUsage(BaseModel):
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+
+
+class ModelResponse(BaseModel):
+    content: str = ""
+    tool_calls: list[ToolCall] = Field(default_factory=list)
+    usage: ModelUsage | None = None
+    raw: dict[str, Any] | None = None
+
+
+class AgentState(TypedDict):
+    run_id: str
+    user_task: str
+    messages: list[Message]
+    retrieved_memories: list[str]
+    pending_tool_calls: list[ToolCall]
+    tool_calls: list[ToolCall]
+    tool_results: list[ToolResult]
+    current_step: int
+    final_answer: str | None
+    last_model_response: ModelResponse | None
+    errors: list[str]
+    total_input_tokens: int
+    total_output_tokens: int
+
+
+def initial_state(run_id: str, task: str) -> AgentState:
+    return AgentState(
+        run_id=run_id,
+        user_task=task,
+        messages=[Message(role="user", content=task)],
+        retrieved_memories=[],
+        pending_tool_calls=[],
+        tool_calls=[],
+        tool_results=[],
+        current_step=0,
+        final_answer=None,
+        last_model_response=None,
+        errors=[],
+        total_input_tokens=0,
+        total_output_tokens=0,
+    )
