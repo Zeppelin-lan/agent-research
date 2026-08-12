@@ -19,6 +19,7 @@ class Message(BaseModel):
     name: str | None = None
     tool_call_id: str | None = None
     tool_calls: list[ToolCall] = Field(default_factory=list)
+    provider_items: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ToolResult(BaseModel):
